@@ -27,6 +27,9 @@ spec:
   volumes:
     - name: source
       emptyDir: {}
+    - name: certs
+      secret:
+        secretName: tls-ca
     - name: icp-ca
       secret:
         secretName: edge-access
@@ -40,6 +43,9 @@ spec:
   steps:
     - name: git-clone
       image: alpine/git
+      volumeMounts:
+        - name: certs
+          mountPath: /tmp/certs
       env:
         - name: GIT_PASSWORD
           valueFrom:
@@ -55,6 +61,10 @@ spec:
               optional: true
       script: |
         set +x
+        cp /tmp/certs/ca.pem /usr/local/share/ca-certificates/tls-ca.crt
+
+        /usr/sbin/update-ca-certificates
+
         if [[ -n "${GIT_USERNAME}" ]] && [[ -n "${GIT_PASSWORD}" ]]; then
             git clone "$(echo $(params.git-url) | awk -F '://' '{print $1}')://${GIT_USERNAME}:${GIT_PASSWORD}@$(echo $(params.git-url) | awk -F '://' '{print $2}')" $(params.source-dir)
         else

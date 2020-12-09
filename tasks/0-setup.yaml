@@ -87,6 +87,9 @@ spec:
   volumes:
     - name: source
       emptyDir: {}
+    - name: certs
+      secret:
+        secretName: tls-ca
   stepTemplate:
     volumeMounts:
       - name: source
@@ -94,6 +97,9 @@ spec:
   steps:
     - name: git-clone
       image: alpine/git
+      volumeMounts:
+        - name: certs
+          mountPath: /tmp/certs
       env:
         - name: NAMESPACE
           valueFrom:
@@ -123,8 +129,25 @@ spec:
               name: registry-access
               key: REGISTRY_NAMESPACE
               optional: true
+        - name: REGISTRY_SERVER
+          valueFrom:
+            secretKeyRef:
+              name: registry-access
+              key: REGISTRY_URL
+              optional: true
+        - name: REGISTRY_NAMESPACE
+          valueFrom:
+            secretKeyRef:
+              name: registry-access
+              key: REGISTRY_NAMESPACE
+              optional: true
       script: |
         set +x
+        
+        cp /tmp/certs/ca.pem /usr/local/share/ca-certificates/tls-ca.crt
+
+        /usr/sbin/update-ca-certificates
+
         if [[ -n "${GIT_USERNAME}" ]] && [[ -n "${GIT_PASSWORD}" ]]; then
             git clone "$(echo $(params.git-url) | awk -F '://' '{print $1}')://${GIT_USERNAME}:${GIT_PASSWORD}@$(echo $(params.git-url) | awk -F '://' '{print $2}')" $(params.source-dir)
         else
@@ -149,8 +172,14 @@ spec:
         echo -n "$(params.js-image)">$(results.js-image.path)
 
 
-        REGISTRY_SERVER="$(params.image-server)"
-        REGISTRY_NAMESPACE="$(params.image-namespace)"
+        if [[ -z REGISTRY_SERVER ]]; then
+          REGISTRY_SERVER="$(params.image-server)"
+        fi
+
+        if [[ -z REGISTRY_NAMESPACE ]]; then 
+          REGISTRY_NAMESPACE="$(params.image-namespace)"
+        fi
+        
         REGISTRY_REPOSITORY="$(params.image-repository)"
         REGISTRY_TAG="$(params.image-tag)"
 
