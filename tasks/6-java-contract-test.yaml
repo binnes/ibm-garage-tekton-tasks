@@ -54,7 +54,7 @@ spec:
               optional: true
       script: |
         set +x
-        cp /tmp/certs/ca.pem /usr/local/share/ca-certificates/tls-ca.crt
+        cp /tmp/certs/rootCA_crt.pem /usr/local/share/ca-certificates/tls-ca.crt
 
         /usr/sbin/update-ca-certificates
 
