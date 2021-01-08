@@ -23,7 +23,7 @@ spec:
     - name: version
       default: ""
     - name: tools-image
-      default: ibmgaragecloud/ibmcloud-dev:1.2.2
+      default: quay.io/ibmgaragecloud/ibmcloud-dev:v2.0.4
   volumes:
     - name: source
       emptyDir: {}
@@ -42,10 +42,10 @@ spec:
         mountPath: $(params.source-dir)
   steps:
     - name: git-clone
-      image: alpine/git
       volumeMounts:
         - name: certs
           mountPath: /tmp/certs
+      image: quay.io/ibmgaragecloud/alpine-git
       env:
         - name: GIT_PASSWORD
           valueFrom:
