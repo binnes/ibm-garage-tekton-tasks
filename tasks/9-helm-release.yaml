@@ -76,6 +76,9 @@ spec:
     - name: package-helm
       image: $(params.tools-image)
       workingdir: $(params.source-dir)
+      volumeMounts:
+        - name: certs
+          mountPath: /tmp/certs      
       env:
         - name: TLS_SECRET_NAME
           valueFrom:
@@ -134,6 +137,10 @@ spec:
       script: |
           #!/usr/bin/env bash
           set -ex
+
+          cp /tmp/certs/rootCA_crt.pem /usr/local/share/ca-certificates/tls-ca.crt
+
+          /usr/sbin/update-ca-certificates
 
           CURL_FLAGS="$(params.helm-curl)"
 

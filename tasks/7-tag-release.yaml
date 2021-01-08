@@ -73,11 +73,18 @@ spec:
         # Need to create  branch to make release-it work
         git switch -c local
     - name: git-tag
+      volumeMounts:
+        - name: certs
+          mountPath: /tmp/certs
       image: $(params.js-image)
       workingdir: $(params.source-dir)
       script: |
         #!/usr/bin/env bash
         set -ex
+
+        cp /tmp/certs/rootCA_crt.pem /usr/local/share/ca-certificates/tls-ca.crt
+
+        /usr/sbin/update-ca-certificates
 
         echo "Current branch: $(git rev-parse --abbrev-ref HEAD)"
         git fetch --tags

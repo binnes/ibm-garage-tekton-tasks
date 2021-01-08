@@ -27,6 +27,9 @@ spec:
   volumes:
     - name: varlibcontainers
       emptyDir: {}
+    - name: certs
+      secret:
+        secretName: tls-ca
   steps:
     - name: image-tag
       image: $(params.SKOPEO_IMAGE)
@@ -46,6 +49,8 @@ spec:
       volumeMounts:
         - mountPath: /var/lib/containers
           name: varlibcontainers
+        - name: certs
+          mountPath: /tmp/certs
       securityContext:
         privileged: true
       script: |
@@ -58,6 +63,11 @@ spec:
 
         echo "Tagging ${IMAGE_FROM} as ${IMAGE_TO}"
         set +x
+
+        cp /tmp/certs/rootCA_crt.pem /etc/pki/ca-trust/source/anchors/tls-ca.crt
+
+        /usr/bin/update-ca-trust
+
         if [[ -n "${REGISTRY_USER}" ]] && [[ -n "${REGISTRY_PASSWORD}" ]] && [[ ! "${REGISTRY_SERVER_FROM}" =~ ":" ]]; then
           IMAGE_FROM_CREDS="--src-creds ${REGISTRY_USER}:${REGISTRY_PASSWORD}"
         fi
