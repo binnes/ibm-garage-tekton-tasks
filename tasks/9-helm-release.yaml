@@ -79,6 +79,8 @@ spec:
       volumeMounts:
         - name: certs
           mountPath: /tmp/certs      
+      securityContext:
+        runAsUser: 0
       env:
         - name: TLS_SECRET_NAME
           valueFrom:
